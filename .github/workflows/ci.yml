@@ -5,10 +5,57 @@ name: ci
 
 on:
   workflow_dispatch:
+  
+env:
+  ACTIONS_STEP_DEBUG: true
 
 jobs:
 
-  build:
+  android:
+    runs-on: 	macos-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+    
+    - name: Install Gomobile
+      run: |
+        go install golang.org/x/mobile/cmd/gomobile@latest
+        gomobile init
+
+    - name: Ndk
+      id: setup-ndk
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r20b
+        local-cache: true
+
+    - name: Test
+      run: |
+        java -version
+        ls -al ~/go/bin
+        ls -al $ANDROID_NDK_HOME/meta
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+
+    - name: Build
+      run: |
+        make android
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: android
+        path: |
+          open_im_sdk.aar
+          open_im_sdk-sources.jar
+
+  ios:
     runs-on: 	macos-latest
     steps:
     - uses: actions/checkout@v3
@@ -25,17 +72,15 @@ jobs:
 
     - name: Test
       run: |
-        java -version
         ls -al ~/go/bin
 
     - name: Build
-      run: make ios
-      
-    - name: Tar
-      run: tar zcvf xcframework.tar.gz build/OpenIMCore.xcframework
+      run: |
+        make ios
+        tar zcvf xcframework.tar.gz build/OpenIMCore.xcframework
       
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: xcframework.tar.gz
+        name: ios
         path: xcframework.tar.gz
