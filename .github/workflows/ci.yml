@@ -52,8 +52,8 @@ jobs:
       with:
         name: android
         path: |
-          open_im_sdk.aar
-          open_im_sdk-sources.jar
+          ${{ github.workspace }}/open_im_sdk.aar
+          ${{ github.workspace }}/open_im_sdk-sources.jar
 
   ios:
     runs-on: 	macos-latest
@@ -83,4 +83,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: ios
-        path: xcframework.tar.gz
+        path: ${{ github.workspace }}/xcframework.tar.gz
